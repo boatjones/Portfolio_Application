@@ -91,7 +91,7 @@ if st.button("View Sector Returns"):
             sql2 = f"select price_date, {columns} from log_returns"
             print(f"df select: {sql2}")
             df = db.alc_query(sql2)
-            st.dataframe(df)
+            # st.dataframe(df) was only for debugging
             df.to_csv("test_out.csv")
 
         # calculate cumulative return data
