@@ -44,7 +44,8 @@ if st.button("Get and Refresh Prices"):
         port.columns = port_list
         # convert columns to lower prior to load - Postgres is strict
         port.columns = port.columns.str.lower()
-        port.index.name = port.index.name.lower()
+        # port.index.name = port.index.name.lower()
+        port = port.rename_axis("price_date")
         tablename = "prices"
         db.alc_df_2_db(port, tablename)
         # port.to_csv("test_port.csv")
@@ -75,6 +76,7 @@ if st.button("View Sector Returns"):
         # determine returns dataframe based on user choice
         if answer == "All Sectors":
             sql = "select * from log_returns"
+            print(f"all sector sql: {sql}")
             df = db.alc_query(sql)
         else:
             # get tickers belonging to that sector
@@ -86,22 +88,26 @@ if st.button("View Sector Returns"):
             # put them in a comma separated string
             columns = ", ".join(ticker_lst)
             # use this to select just these tickers from table
-            sql2 = f"select date, {columns} from log_returns"
+            sql2 = f"select price_date, {columns} from log_returns"
             print(f"df select: {sql2}")
-            df = db.psy_query(sql)
+            df = db.alc_query(sql2)
+            st.dataframe(df)
+            df.to_csv("test_out.csv")
 
         # calculate cumulative return data
         cumul_return2 = (
-            df.drop(columns=["date"]).apply(lambda x: (1 + x).cumprod() - 1) * 100
+            df.drop(columns=["price_date"]).apply(lambda x: (1 + x).cumprod() - 1) * 100
         )
-        cumul_return2.insert(0, "date", df["date"])
+        cumul_return2.insert(0, "price_date", df["price_date"])
 
         # chart the returns
         fig = plt.figure(figsize=(12, 6))
         for column in cumul_return2.columns:
-            if column != "date":
+            if column != "price_date":
                 plt.plot(
-                    cumul_return2["date"], cumul_return2[column], label=column.upper()
+                    cumul_return2["price_date"],
+                    cumul_return2[column],
+                    label=column.upper(),
                 )
 
         plt.ylabel("Returns")

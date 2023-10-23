@@ -11,11 +11,13 @@ class PgHook:
         self.__pgurl = getenv("POSTGRES_URL")
         self.__user = getenv("LOCAL_USER")
         self.__pword = getenv("LOCAL_PASSWORD")
+        self.__dbname = "octane"
+        # self.__dbname = "cvxscfer"
 
     def psy_query(self, sql):
         # open database connection
         conn = psycopg2.connect(
-            dbname="octane", user=self.__user, password=self.__pword
+            dbname=self.__dbname, user=self.__user, password=self.__pword
         )
         # open database cursor
         cur = conn.cursor()
