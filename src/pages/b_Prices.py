@@ -18,11 +18,25 @@ db = PgHook()
 
 st.title("Individual Historical Prices")
 
-if st.button("Get and Refresh Prices"):
+if st.button("Show Portfolio and Sectors"):
+    try:
+        sql = """select p.ticker,
+                        p.security_name,
+                        s.sector_name
+                from portfolio p, sector s
+                where s.sector_id = p.sector_id
+            """
+        df = db.alc_query(sql)
+        st.write(df)
+    except:
+        st.error("Database Error")
+
+if st.button("Get/Refresh Prices & Compute Log Returns"):
     try:
         # find dates for import
         today = datetime.today().strftime("%Y-%m-%d")
         five = (datetime.today() - relativedelta(years=5)).strftime("%Y-%m-%d")
+        # get list of tickers from database to work with
         sql = "select ticker from portfolio"
         df = db.alc_query(sql)
         port_list = df["ticker"].tolist()
@@ -32,6 +46,7 @@ if st.button("Get and Refresh Prices"):
             def __init__(self, name):
                 self.name = name
 
+        ##### Stock Downloading Section
         # dictionary to hold ticker and pd.series object location name
         dct = {name: ClassThing(name) for name in port_list}
         # get price data for tickers in list using yfinance where pd.series are memory location names
@@ -40,25 +55,36 @@ if st.button("Get and Refresh Prices"):
             dct[stk] = yf.download(stk, start=five, end=today)["Adj Close"]
         # combine the tickers into a single dataframe
         port = pd.concat([dct[x] for x in port_list], axis=1)
-        # ticker names to portfolio
+
+        ###### Write Prices To Database
+        # get listing of fields
         port.columns = port_list
         # convert columns to lower prior to load - Postgres is strict
         port.columns = port.columns.str.lower()
-        # port.index.name = port.index.name.lower()
+        # replace "=" in tickers with "_"
+        port.columns = port.columns.str.replace("=", "_")
+        # rename 'date' index field to 'price_date' to not piss off Postgres
         port = port.rename_axis("price_date")
+        # create table in Postgres
         tablename = "prices"
         db.alc_df_2_db(port, tablename)
-        # port.to_csv("test_port.csv")
         st.success("Data retrieved and saved to prices table")
+
+        ###### Compute Log Returns and Save to Database
         # prepare dataframe to compute returns
         port.fillna(0, inplace=True)
         port.iloc[:, 1:] = port.iloc[:, 1:].apply(pd.to_numeric, errors="coerce")
         # compute log returns
         log_rets = np.log(port / port.shift(1))
         # drop first row
-        log_rets = log_rets.drop(log_rets.index[0])
+        log_rets = log_rets.drop(log_rets.index[0])  # replaced by one line below
         # fill any remaining nulls with zero
-        log_rets = log_rets.fillna(0)
+        log_rets = log_rets.fillna(0)  # replaced by one line below
+        # log_rets = log_rets.dropna() <== this was too brutal and truncated years of data restoring previous 2 lines
+        # Find and replace infinite values with zero
+        log_rets.replace([np.inf, -np.inf], np.nan, inplace=True)
+        log_rets.fillna(0, inplace=True)
+        # create table in Postgres
         tablename = "log_returns"
         db.alc_df_2_db(log_rets, tablename)
 
@@ -73,18 +99,21 @@ answer = st.selectbox(
 )
 if st.button("View Sector Returns"):
     try:
-        # determine returns dataframe based on user choice
+        ##### Determine Returns Dataframe Based on User Choice
         if answer == "All Sectors":
             sql = "select * from log_returns"
             print(f"all sector sql: {sql}")
             df = db.alc_query(sql)
         else:
-            # get tickers belonging to that sector
+            # get tickers belonging to that sector - use lowercased & replaced fieldnames
             sql = f"select p.ticker from portfolio p, sector s where s.sector_id = p.sector_id and s.sector_name = '{answer}'"
             print(f"ticker select: {sql}")
             ticker_df = db.alc_query(sql)
             # make tickers a list
+            # first lowercasing them
             ticker_lst = [ticker.lower() for ticker in ticker_df["ticker"]]
+            # then replacing any "=" characters
+            ticker_lst = [ticker.replace("=", "_") for ticker in ticker_lst]
             # put them in a comma separated string
             columns = ", ".join(ticker_lst)
             # use this to select just these tickers from table
@@ -92,27 +121,29 @@ if st.button("View Sector Returns"):
             print(f"df select: {sql2}")
             df = db.alc_query(sql2)
             # st.dataframe(df) was only for debugging
-            df.to_csv("test_out.csv")
+            # df.to_csv("test_out.csv")
 
-        # calculate cumulative return data
-        cumul_return2 = (
-            df.drop(columns=["price_date"]).apply(lambda x: (1 + x).cumprod() - 1) * 100
-        )
+        ###### Cumulative Return Calculation
+        # Select numeric columns for log returns excluding the 'date' column
+        numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+        # Compute cumulative sum for the numeric columns
+        cumul_return2 = df[numeric_columns].cumsum()
+        # merge the price_date column back with the cumulative log returns
         cumul_return2.insert(0, "price_date", df["price_date"])
 
-        # chart the returns
+        ###### Chart the Returns
         fig = plt.figure(figsize=(12, 6))
         for column in cumul_return2.columns:
             if column != "price_date":
                 plt.plot(
                     cumul_return2["price_date"],
-                    cumul_return2[column],
+                    cumul_return2[column] * 100,
                     label=column.upper(),
                 )
 
         plt.ylabel("Returns")
         plt.xlabel("Date")
-        plt.title("Individual Percent Returns")
+        plt.title("Individual Percent Log Returns")
         plt.legend()
         st.pyplot(fig)
 

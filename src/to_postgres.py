@@ -14,6 +14,9 @@ class PgHook:
         self.__dbname = "octane"
         # self.__dbname = "cvxscfer"
 
+    def __repr__(self):
+        return "Class handling queries and table creates with the Postges server"
+
     def psy_query(self, sql):
         # open database connection
         conn = psycopg2.connect(
