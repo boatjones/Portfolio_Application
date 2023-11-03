@@ -45,6 +45,7 @@ if st.button("View Sector Index Returns"):
         plt.ylabel("Price Start @ 100")
         plt.xlabel("Date")
         plt.title("Portfolio Sector Performance Against Commodity")
+        plt.grid(axis="y")
         plt.legend()
         st.pyplot(fig)
         st.subheader("Sector Descriptions")

@@ -87,6 +87,7 @@ if st.button("Get/Refresh Prices & Compute Log Returns"):
         # create table in Postgres
         tablename = "log_returns"
         db.alc_df_2_db(log_rets, tablename)
+        st.success("Log returns calculated and saved to log_returns table")
 
     except:
         st.error("Error in connecting to database or yfinance")
@@ -104,6 +105,9 @@ if st.button("View Sector Returns"):
             sql = "select * from log_returns"
             print(f"all sector sql: {sql}")
             df = db.alc_query(sql)
+            # get dataframe for descriptive text
+            sql3 = "select ticker, security_name from portfolio"
+            df_descriptions = db.alc_query(sql3)
         else:
             # get tickers belonging to that sector - use lowercased & replaced fieldnames
             sql = f"select p.ticker from portfolio p, sector s where s.sector_id = p.sector_id and s.sector_name = '{answer}'"
@@ -120,8 +124,9 @@ if st.button("View Sector Returns"):
             sql2 = f"select price_date, {columns} from log_returns"
             print(f"df select: {sql2}")
             df = db.alc_query(sql2)
-            # st.dataframe(df) was only for debugging
-            # df.to_csv("test_out.csv")
+            # also get a dataframe for descriptive text
+            sql3 = f"select p.ticker, p.security_name from portfolio p, sector s where s.sector_id = p.sector_id and  s.sector_name = '{answer}'"
+            df_descriptions = db.alc_query(sql3)
 
         ###### Cumulative Return Calculation
         # Select numeric columns for log returns excluding the 'date' column
@@ -145,7 +150,10 @@ if st.button("View Sector Returns"):
         plt.xlabel("Date")
         plt.title("Individual Percent Log Returns")
         plt.legend()
+        plt.grid(axis="y")
         st.pyplot(fig)
+        st.subheader("Security Descriptions")
+        st.write(df_descriptions)
 
     except:
         st.error("Database error")
