@@ -215,7 +215,7 @@ if st.button("View Monte Carlo Results for Sector"):
             print(f"all sector sql: {sql}")
             df = db.alc_query(sql)
         else:
-            # get tickers belonging to that sector - use lowercased & replaced fieldnames
+            # get table belonging to that sector
             sql = f"select mc_table from sector where sector_name = '{answer}'"
             mc_df = db.alc_query(sql)
             # get appropriate table to use for charting
