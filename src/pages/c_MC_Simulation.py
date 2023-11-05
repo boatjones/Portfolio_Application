@@ -7,11 +7,6 @@ from pathlib import Path
 import plotly.express as px  # plotly still uncooperative
 import matplotlib.pyplot as plt
 
-# Dead imports
-# from datetime import datetime
-# from dateutil.relativedelta import relativedelta
-# import yfinance as yf
-
 # imports of my external files
 sys.path.insert(0, os.path.join(Path(__file__).parents[1]))
 from to_postgres import PgHook
@@ -23,177 +18,51 @@ db = PgHook()
 st.title("Monte Carlo Simulation & Index Construction")
 if st.button("Run Monte Carlo Simulations for Portfolio Segments & Compute Indices"):
     try:
-        # 1) get full portfolio
-        sql = "select db_name from portfolio where sector_id <> 7"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_all = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_all"
-        db.alc_df_2_db(mc_all, tablename)
-        st.success("Full Portfolio Calculated and Saved to Database")
-        # calculate index value
-        ndx_vals = mc_core.ndx_calc(mc_all)
-        ndx_vals.rename(columns={"portfolio_value": "all_sect"}, inplace=True)
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Full Portfolio")
+        sql = "select sector_id, sector_name, mc_table, ndx_name from sector order by sector_id"
+        sector_df = db.alc_query(sql)
 
-        # 2) get sector 1 Exploration and Production
-        sql = "select db_name from portfolio where sector_id = 1"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_ep = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_ep"
-        db.alc_df_2_db(mc_ep, tablename)
-        st.success("Exploration & Production Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_ep = mc_core.ndx_calc(mc_ep)
-        ndx_ep.rename(columns={"portfolio_value": "ep"}, inplace=True)
-        # merge ep column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals, ndx_ep[["price_date", "ep"]], on="price_date", how="left"
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Exploration & Production")
+        first = True
+        for _, row in sector_df.iterrows():
+            sector_id = row["sector_id"]
+            sector_name = row["sector_name"]
+            mc_table = row["mc_table"]
+            ndx_name = row["ndx_name"]
 
-        # 3) get sector 2 Refining and Marketing
-        sql = "select db_name from portfolio where sector_id = 2"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_refmkt = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_refmkt"
-        db.alc_df_2_db(mc_refmkt, tablename)
-        st.success("Refining & Marketing Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_refmkt = mc_core.ndx_calc(mc_refmkt)
-        ndx_refmkt.rename(columns={"portfolio_value": "ref_mkt"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals, ndx_refmkt[["price_date", "ref_mkt"]], on="price_date", how="left"
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Refining & Marketing")
+            if sector_id == 0:
+                sql = "select db_name from portfolio where sector_id <> 7"
+            else:
+                sql = f"select db_name from portfolio where sector_id = {sector_id}"
+            # get tickers for portfolio
+            df = db.alc_query(sql)
+            # turn into a list
+            port_list = df["db_name"].tolist()
+            # use this list to run through the Monte Carlo function
+            mc_df = mc_core.mc_hammer(port_list)
+            # save results to a table
+            tablename = mc_table
+            db.alc_df_2_db(mc_df, tablename)
+            st.success(f"{sector_name} Calculated and Saved to Database")
+            # print(first)
+            # calculate the index value on optimal weighting found
+            if first:
+                # put first index into ndx_vals dataframe
+                ndx_vals = mc_core.ndx_calc(mc_df)
+                ndx_vals.rename(columns={"portfolio_value": ndx_name}, inplace=True)
+                first = False
+            else:
+                # calc successive indices in their own dataframes
+                new_ndx = mc_core.ndx_calc(mc_df)
+                new_ndx.rename(columns={"portfolio_value": ndx_name}, inplace=True)
+                # ... and then join them into the ndx_vals dataframe
+                ndx_vals = pd.merge(
+                    ndx_vals,
+                    new_ndx[["price_date", ndx_name]],
+                    on="price_date",
+                    how="left",
+                )
+            st.success(f"Index calculated for {sector_name}")
 
-        # 4) get sector 3 Equipment and Services
-        sql = "select db_name from portfolio where sector_id = 3"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_equip = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_equip"
-        db.alc_df_2_db(mc_equip, tablename)
-        st.success("Equipment & Services Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_equip = mc_core.ndx_calc(mc_equip)
-        ndx_equip.rename(columns={"portfolio_value": "equip"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals, ndx_equip[["price_date", "equip"]], on="price_date", how="left"
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Equipment & Services")
-
-        # 5) get sector 4 Integrated
-        sql = "select db_name from portfolio where sector_id = 4"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_int = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_int"
-        db.alc_df_2_db(mc_int, tablename)
-        st.success("Integrated Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_int = mc_core.ndx_calc(mc_int)
-        ndx_int.rename(columns={"portfolio_value": "int"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals, ndx_int[["price_date", "int"]], on="price_date", how="left"
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Integrated")
-
-        # 6: get sector 5 Thermal Coal
-        sql = "select db_name from portfolio where sector_id = 5"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_coal = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_coal"
-        db.alc_df_2_db(mc_coal, tablename)
-        st.success("Thermal Coal Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_coal = mc_core.ndx_calc(mc_coal)
-        ndx_coal.rename(columns={"portfolio_value": "coal"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals, ndx_coal[["price_date", "coal"]], on="price_date", how="left"
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Thermal Coal")
-
-        # 7: get sector 6 Basic Materials
-        sql = "select db_name from portfolio where sector_id = 6"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_bas_mat = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_bas_mat"
-        db.alc_df_2_db(mc_bas_mat, tablename)
-        st.success("Basic Materials Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_bas_mat = mc_core.ndx_calc(mc_bas_mat)
-        ndx_bas_mat.rename(columns={"portfolio_value": "bas_mat"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals,
-            ndx_bas_mat[["price_date", "bas_mat"]],
-            on="price_date",
-            how="left",
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Basic Materials")
-
-        # 8: get sector 7 Commodity
-        sql = "select db_name from portfolio where sector_id = 7"
-        df = db.alc_query(sql)
-        port_list = df["db_name"].tolist()
-        # run simulation on selection
-        mc_comm = mc_core.mc_hammer(port_list)
-        # save results to database
-        # create table in Postgres
-        tablename = "mc_comm"
-        db.alc_df_2_db(mc_comm, tablename)
-        st.success("Commodity Port Calculated and Saved to Database")
-        # calculate index value
-        ndx_comm = mc_core.ndx_calc(mc_comm)
-        ndx_comm.rename(columns={"portfolio_value": "comm"}, inplace=True)
-        # merge new column in to main index dataframe
-        ndx_vals = pd.merge(
-            ndx_vals,
-            ndx_comm[["price_date", "comm"]],
-            on="price_date",
-            how="left",
-        )
-        # ndx_vals.to_excel("test.xlsx")
-        st.success("Index calculated for Commodity")
-
-        # 9: write index table to database
+        # Write index table to database
         tablename = "ndx_vals"
         db.alc_df_2_db(ndx_vals, tablename)
         st.success("Index table 'ndx_vals' written to database")

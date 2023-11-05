@@ -15,7 +15,7 @@ def mc_hammer(port_list):
     # retrieve price history for selected tickers
     columns = ", ".join(port_list)
     sql2 = f"select price_date, {columns} from prices"
-    print(f"port select: {sql2}")
+    # print(f"port select: {sql2}")
     port = db.alc_query(sql2)
 
     # set date to be index thus removing it from simulations
@@ -107,7 +107,7 @@ def ndx_calc(mc_frame):
     columns = ", ".join(port_list)
     # use this to select just these tickers from table
     sql2 = f"select price_date, {columns} from log_returns"
-    print(f"df select: {sql2}")
+    # print(f"df select: {sql2}")
     log_returns_df = db.alc_query(sql2)
 
     # Calculate the daily portfolio value

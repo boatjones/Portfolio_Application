@@ -35,7 +35,7 @@ if st.button("Get/Refresh Prices & Compute Log Returns"):
     try:
         # find dates for import
         today = datetime.today().strftime("%Y-%m-%d")
-        five = (datetime.today() - relativedelta(years=5)).strftime("%Y-%m-%d")
+        beg_date = (datetime.today() - relativedelta(years=20)).strftime("%Y-%m-%d")
         # get list of tickers from database to work with
         sql = "select ticker from portfolio"
         df = db.alc_query(sql)
@@ -52,7 +52,7 @@ if st.button("Get/Refresh Prices & Compute Log Returns"):
         # get price data for tickers in list using yfinance where pd.series are memory location names
         for stk in port_list:
             print(f"Downloading data for {stk}")
-            dct[stk] = yf.download(stk, start=five, end=today)["Adj Close"]
+            dct[stk] = yf.download(stk, start=beg_date, end=today)["Adj Close"]
         # combine the tickers into a single dataframe
         port = pd.concat([dct[x] for x in port_list], axis=1)
 
