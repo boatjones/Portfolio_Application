@@ -18,6 +18,7 @@ db = PgHook()
 st.title("Monte Carlo Simulation & Index Construction")
 if st.button("Run Monte Carlo Simulations for Portfolio Segments & Compute Indices"):
     try:
+        # get sector table and fields that drive indices name and monte carlo table name
         sql = "select sector_id, sector_name, mc_table, ndx_name from sector order by sector_id"
         sector_df = db.alc_query(sql)
 
@@ -36,13 +37,12 @@ if st.button("Run Monte Carlo Simulations for Portfolio Segments & Compute Indic
             df = db.alc_query(sql)
             # turn into a list
             port_list = df["db_name"].tolist()
-            # use this list to run through the Monte Carlo function
+            # use this list to run through the external Monte Carlo function
             mc_df = mc_core.mc_hammer(port_list)
             # save results to a table
             tablename = mc_table
             db.alc_df_2_db(mc_df, tablename)
             st.success(f"{sector_name} Calculated and Saved to Database")
-            # print(first)
             # calculate the index value on optimal weighting found
             if first:
                 # put first index into ndx_vals dataframe
