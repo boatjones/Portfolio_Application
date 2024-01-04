@@ -15,6 +15,12 @@ import mc_core
 # make database helper object
 db = PgHook()
 
+if not st.session_state.authentication_status:
+    st.info("Please Login from the Home page and try again.")
+    st.stop()
+
+st.write(f'Welcome *{st.session_state["name"]}*')
+
 st.title("Monte Carlo Simulation & Index Construction")
 if st.button("Run Monte Carlo Simulations for Portfolio Segments & Compute Indices"):
     try:

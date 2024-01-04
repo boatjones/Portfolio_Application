@@ -16,6 +16,12 @@ from to_postgres import PgHook
 # make database helper object
 db = PgHook()
 
+if not st.session_state.authentication_status:
+    st.info("Please Login from the Home page and try again.")
+    st.stop()
+
+st.write(f'Welcome *{st.session_state["name"]}*')
+
 st.title("View Sector Indices Against Commodity")
 
 if st.button("View Sector Index Returns"):
@@ -37,7 +43,7 @@ if st.button("View Sector Index Returns"):
                         df[column],
                         label=column.upper(),
                         linewidth=2,
-                        color="red",
+                        color="black",
                     )
                 else:
                     ax.plot(df["price_date"], df[column], label=column.upper())

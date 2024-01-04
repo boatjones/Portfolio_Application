@@ -16,6 +16,12 @@ from to_postgres import PgHook
 # make database helper object
 db = PgHook()
 
+if not st.session_state.authentication_status:
+    st.info("Please Login from the Home page and try again.")
+    st.stop()
+
+st.write(f'Welcome *{st.session_state["name"]}*')
+
 st.title("Individual Historical Prices")
 
 if st.button("Show Portfolio and Sectors"):

@@ -1,0 +1,9 @@
+
+src/.env
+src/.ipynb_checkpoints/db_test-checkpoint.ipynb
+src/.ipynb_checkpoints/prices_test-checkpoint.ipynb
+src/__pycache__/mc_core.cpython-39.pyc
+src/__pycache__/to_postgres.cpython-311.pyc
+src/__pycache__/to_postgres.cpython-39.pyc
+src/login_test.ipynb
+security.yaml
