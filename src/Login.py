@@ -1,13 +1,13 @@
 import streamlit as st
-
-# bring in authenticator and yaml file handling
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
+# open credential yaml file
 with open("../security.yaml") as file:
     config = yaml.load(file, Loader=SafeLoader)
 
+# create authenticator object with yaml contents
 authenticator = stauth.Authenticate(
     config["credentials"],
     config["cookie"]["name"],
@@ -16,11 +16,15 @@ authenticator = stauth.Authenticate(
     config["preauthorized"],
 )
 
+# login user details from object
 name, authentication_status, username = authenticator.login("Login", "main")
 
+# successful login section
 if st.session_state["authentication_status"]:
     authenticator.logout("Logout", "main")
     st.write(f'Welcome *{st.session_state["name"]}*')
+
+    # post authentication home/start page for application
     st.title("Portfolio Application")
     st.text(
         """ 
@@ -57,6 +61,7 @@ if st.session_state["authentication_status"]:
         """
     )
 
+# unsuccessful login section
 elif st.session_state["authentication_status"] == False:
     st.error("Username/password is incorrect")
 elif st.session_state["authentication_status"] == None:
