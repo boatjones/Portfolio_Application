@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 class PgHook:
     def __init__(self):
         load_dotenv()
-        self.__pgurl = getenv("POSTGRES_URL")
+        self.__pgurl = getenv("DO_URL")
         self.__user = getenv("LOCAL_USER")
         self.__pword = getenv("LOCAL_PASSWORD")
         self.__dbname = "octane"
