@@ -1,0 +1,6 @@
+Steps to container:
+1) create Dockerfile as per https://docs.streamlit.io/knowledge-base/tutorials/deploy/docker
+1.5) use conda cheat PDF page to make requirements.txt and replacing lines having external links with version numbers from py_obb.yml file adding extra '='
+2) build docker image: $ docker build -t octane .
+3) run docker container: $ docker run octane
+note that instructions in streamlit.io page for running are wrong, use above
