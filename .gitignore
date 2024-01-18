@@ -7,3 +7,5 @@ src/__pycache__/to_postgres.cpython-311.pyc
 src/__pycache__/to_postgres.cpython-39.pyc
 src/login_test.ipynb
 security.yaml
+ipynb/.ipynb_checkpoints/prices_test-checkpoint.ipynb
+ipynb/.ipynb_checkpoints/db_test-checkpoint.ipynb

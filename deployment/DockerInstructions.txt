@@ -1,0 +1,18 @@
+Steps to container:
+1) create Dockerfile as per https://docs.streamlit.io/knowledge-base/tutorials/deploy/docker
+1.5) use conda cheat PDF page to make requirements.txt and replacing lines having external links with version numbers from py_obb.yml file adding extra '='
+2) build docker image: $ docker build -t octane .
+3) run docker container: $ docker run -p 8501:8501 octane
+4) Login to DockerHub.  See Keypass under Docker for personal token
+5) Tag image you want to push: $ docker tag fa8a7537247d boatjones/octane:apptag
+6) Push image: $ docker push boatjones/octane:apptag
+DigitalOcean Droplet
+7) In DigitalOcean CLI for Droplet, Login to DockerHub.  See Keypass under Docker for personal token
+8) At prompt: # docker image pull boatjones/octane:apptag
+9) Test image: # docker run -p 8501:8501 boatjones/octane:apptag
+
+A key webpage:
+https://www.digitalocean.com/community/questions/how-to-deploy-streamlit-app-from-droplet
+
+setting up docker on a Ubuntu machine
+https://docs.docker.com/engine/install/ubuntu/
