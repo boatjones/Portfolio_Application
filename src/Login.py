@@ -17,7 +17,11 @@ authenticator = stauth.Authenticate(
 )
 
 # login user details from object
-name, authentication_status, username = authenticator.login("Login", "main")
+# name, authentication_status, username = authenticator.login("Login", "main")  <== deprecated form_name
+#login user details from object
+fields = {"username": "Username", "password": "Password"}
+name, authentication_status, username = authenticator.login("main", fields=fields)
+# submit_button = st.form_submit_button(label='Login')
 
 # successful login section
 if st.session_state["authentication_status"]:

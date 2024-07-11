@@ -15,7 +15,7 @@ import mc_core
 # make database helper object
 db = PgHook()
 
-# check for use authentication
+# check for user authentication
 if not st.session_state.authentication_status:
     st.info("Please Login from the Home page and try again.")
     st.stop()
