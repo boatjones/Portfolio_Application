@@ -36,7 +36,9 @@ if st.button("Run Monte Carlo Simulations for Portfolio Segments & Compute Indic
             ndx_name = row["ndx_name"]
 
             if sector_id == 0:
-                sql = "select db_name from portfolio where sector_id <> 7"
+                sql = "select db_name from portfolio where sector_id not in (7,8)"
+            elif sector_id == 8:
+                pass
             else:
                 sql = f"select db_name from portfolio where sector_id = {sector_id}"
             # get tickers for portfolio
@@ -86,7 +88,7 @@ if st.button("View Monte Carlo Results for Sector"):
     try:
         ##### Determine Returns Dataframe Based on User Choice
         if answer == "All Sectors":
-            sql = "select return, volatility, sharpe from mc_all"
+            sql = "select return, volatility, inf_ratio from mc_all"
             print(f"all sector sql: {sql}")
             df = db.alc_query(sql)
         else:
@@ -95,14 +97,14 @@ if st.button("View Monte Carlo Results for Sector"):
             mc_df = db.alc_query(sql)
             # get appropriate table to use for charting
             mc_table = mc_df["mc_table"].iloc[0]
-            sql = f"select return, volatility, sharpe from {mc_table}"
+            sql = f"select return, volatility, inf_ratio from {mc_table}"
             print(f"Specific sector sql: {sql}")
             df = db.alc_query(sql)
 
         # plot simulation results
         fig = plt.figure(figsize=(12, 6))
-        plt.scatter(df["volatility"], df["return"], c=df["sharpe"])
-        plt.colorbar(label="Sharpe Ratio")
+        plt.scatter(df["volatility"], df["return"], c=df["inf_ratio"])
+        plt.colorbar(label="Information Ratio")
         # plt.rcParams['ytick.right'] = plt.rcParams['ytick.labelright'] = False
         # plt.rcParams['ytick.left'] = plt.rcParams['ytick.labelleft'] = True
         plt.xlabel("Volatility")

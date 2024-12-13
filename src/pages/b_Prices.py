@@ -42,7 +42,7 @@ if st.button("Get/Refresh Prices & Compute Log Returns"):
     try:
         # find dates for import
         today = datetime.today().strftime("%Y-%m-%d")
-        beg_date = (datetime.today() - relativedelta(years=20)).strftime("%Y-%m-%d")
+        beg_date = (datetime.today() - relativedelta(years=10)).strftime("%Y-%m-%d")
         # get list of tickers from database to work with
         sql = "select ticker from portfolio"
         df = db.alc_query(sql)

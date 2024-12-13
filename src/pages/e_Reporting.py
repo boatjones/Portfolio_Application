@@ -27,7 +27,7 @@ st.write(f'Welcome *{st.session_state["name"]}*')
 st.title("Use Pygwalker In Streamlit")
 
 # monte carlo selections
-sql = "select sector_name from sector"
+sql = "select sector_name from sector where sector_id != 8"
 sect_name = db.alc_query(sql)
 answer = st.selectbox(
     "Select an industry sector to chart:",

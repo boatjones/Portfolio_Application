@@ -61,8 +61,9 @@ def mc_hammer(port_list):
         sim_volatility = calculate_volatility(weights, log_rets_cov)
         mc_portfolio_vol.append(sim_volatility)
 
-    # assume zero risk-free rate to calculate Sharpe ratio
-    mc_sharpe_ratios = np.array(mc_portfolio_returns / np.array(mc_portfolio_vol))
+    # calculate Information ratio
+    mc_info_ratios = np.array(mc_portfolio_returns / np.array(mc_portfolio_vol))
+    
 
     # assemble dataframe of results
     df_weights = pd.DataFrame(np.row_stack(mc_weights))
@@ -74,27 +75,27 @@ def mc_hammer(port_list):
     df_portfolio_vol = pd.DataFrame(np.row_stack(mc_portfolio_vol))
     df_portfolio_vol.columns = ["volatility"]
 
-    df_portfolio_sharpe = pd.DataFrame(np.row_stack(mc_sharpe_ratios))
-    df_portfolio_sharpe.columns = ["sharpe"]
+    df_portfolio_inf_ratio = pd.DataFrame(np.row_stack(mc_info_ratios))
+    df_portfolio_inf_ratio.columns = ["inf_ratio"]
 
     df_portfolio_mc = pd.concat(
-        [df_weights, df_portfolio_returns, df_portfolio_vol, df_portfolio_sharpe],
+        [df_weights, df_portfolio_returns, df_portfolio_vol, df_portfolio_inf_ratio],
         axis=1,
     )
 
-    # sort dataframe descending by Sharpe ratio
-    mc_final = df_portfolio_mc.sort_values("sharpe", ascending=False)
+    # sort dataframe descending by Information ratio
+    mc_final = df_portfolio_mc.sort_values("inf_ratio", ascending=False)
 
     return mc_final
 
 
 def ndx_calc(mc_frame):
-    # get first row that's been sorted by Sharpe Ratio
+    # get first row that's been sorted by Information Ratio
     weights = mc_frame.head(1)
     # put weights into a dictionary
     weights_dict = weights.to_dict(orient="records")[0] if not weights.empty else {}
     # List of keys to be removed
-    keys_to_remove = ["return", "volatility", "sharpe"]
+    keys_to_remove = ["return", "volatility", "inf_ratio"]
 
     # Removing specific key-value pairs from the dictionary
     for key in keys_to_remove:

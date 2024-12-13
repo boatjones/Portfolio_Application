@@ -16,13 +16,12 @@ from to_postgres import PgHook
 # make database helper object
 db = PgHook()
 
-'''
+
 # check for user authentication
 if not st.session_state.authentication_status:
     st.info("Please Login from the Home page and try again.")
     st.stop()
 st.write(f'Welcome *{st.session_state["name"]}*')
-'''
 
 st.title("View Sector Indices Against Commodity")
 
@@ -33,7 +32,7 @@ if st.button("View Sector Index Returns"):
         # print(f"all sector sql: {sql}")
         df = db.alc_query(sql)
         ### also get dataframe for a descriptive legend
-        sql2 = "select upper(ndx_name) as abbreviation, sector_name from sector"
+        sql2 = "select upper(ndx_name) as abbreviation, sector_name from sector where sector_id != 8"
         df_descriptions = db.alc_query(sql2)
         ###### Chart the Returns
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -68,7 +67,7 @@ if st.button("View Correlation Matrix of Sectors & Commodity"):
         # print(f"all sector sql: {sql}")
         df = db.alc_query(sql)
         ### also get dataframe for a descriptive legend
-        sql2 = "select upper(ndx_name) as abbreviation, sector_name from sector"
+        sql2 = "select upper(ndx_name) as abbreviation, sector_name from sector where sector_id != 8"
         df_descriptions = db.alc_query(sql2)
         #### calculate the correlations
         # first drop price_date (included in SQL to prevent any sneaky select distincts)
